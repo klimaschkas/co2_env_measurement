@@ -31,7 +31,7 @@ maxlen_storage = 2400
 first_run = True
 
 spi = board.SPI()
-disp = st7789.ST7789(spi, height=240, y_offset=80, rotation=180,cs=cs_pin, dc=dc_pin, rst=reset_pin, baudrate=BAUDRATE)
+disp = st7789.ST7789(spi, height=240, y_offset=80, rotation=180, cs=cs_pin, dc=dc_pin, rst=reset_pin, baudrate=BAUDRATE)
 rolling_co2_storage = deque(maxlen=maxlen_storage)
 
 screensaver_counter = 0
