@@ -21,6 +21,7 @@ class Task:
                 # TODO EOFError when pickle file is corrupted, catch!
         else:
             self.rolling_measurement_storage = deque(maxlen=deque_max_length)
+        self.name = name
         self.most_recent_measurement = -1
         self.thread = None
 
@@ -40,7 +41,9 @@ class Task:
 class CO2ReaderTask(Task):
     def __init__(self, deque_max_length, sleep_time=5):
         super().__init__(deque_max_length, "co2", sleep_time=sleep_time)
-        # TODO catch a failing co2 read
+        # TODO catch a failing co2 read#
+        # counter is to distinguish if a new measurement arrived
+        self.counter = 0
         self.startup_counter = 5
 
         self.start_background_thread()
@@ -51,6 +54,10 @@ class CO2ReaderTask(Task):
             self.startup_counter -= 1
         else:
             self.rolling_measurement_storage.append(measurement)
+        with open(f"deque_store_{self.name}.pickle", "wb") as f:
+            pickle.dump(self.rolling_measurement_storage, f, pickle.HIGHEST_PROTOCOL)
+        self.counter += 1
+        self.counter = self.counter % 50
 
     def read(self):
         try:
@@ -83,6 +90,7 @@ class TemperatureHumiditySensor:
 
     def start_background_thread(self):
         self.thread = threading.Thread(target=self.make_measurements)
+        self.thread.start()
 
 
 class TemperatureReaderTask(Task):
@@ -95,9 +103,11 @@ class TemperatureReaderTask(Task):
 
     def save_measurement(self, measurement):
         self.rolling_measurement_storage.append(measurement)
+        self.most_recent_measurement = measurement
 
     def read(self):
         _, temperature = self.temp_hum_sensor.read_sensor()
+        self.save_measurement(temperature)
 
 
 class HumidityReaderTask(Task):
@@ -108,8 +118,13 @@ class HumidityReaderTask(Task):
 
         self.start_background_thread()
 
+    def save_measurement(self, measurement):
+        self.rolling_measurement_storage.append(measurement)
+        self.most_recent_measurement = measurement
+
     def read(self):
         humidity, _ = self.temp_hum_sensor.read_sensor()
+        self.save_measurement(humidity)
 
 
 class PingReaderTask(Task):

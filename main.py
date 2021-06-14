@@ -7,9 +7,9 @@ if __name__ == '__main__':
 
     temp_hum_sensor = TemperatureHumiditySensor()
     tasks = {
-        "co2": CO2ReaderTask(deque_max_length=2500, sleep_time=5),
-        "temperature": TemperatureReaderTask(deque_max_length=2500, temp_hum_sensor=temp_hum_sensor, sleep_time=2),
-        "humidity": HumidityReaderTask(deque_max_length=2500, temp_hum_sensor=temp_hum_sensor, sleep_time=2),
+        "co2": CO2ReaderTask(deque_max_length=2500, sleep_time=8),
+        "temperature": TemperatureReaderTask(deque_max_length=2500, temp_hum_sensor=temp_hum_sensor, sleep_time=5),
+        "humidity": HumidityReaderTask(deque_max_length=2500, temp_hum_sensor=temp_hum_sensor, sleep_time=5),
         "ping": PingReaderTask(deque_max_length=0)
     }
     tasks["plot"] = PlotBuilderTask(deque_max_length=0, co2_reader_task=tasks["co2"], screen=screen)

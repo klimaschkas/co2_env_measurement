@@ -67,6 +67,7 @@ class Page_CO2Main(Page):
         self.sleep_time = 10
 
         self.task = CO2ReaderTask(deque_max_length=2500)
+        self.previous_co2_measurement_id = 0
 
     def get_color_for_value(self, ppm_value):
         if ppm_value < 1000:
@@ -93,7 +94,13 @@ class Page_CO2Main(Page):
         self.screen.draw.text((80, 220), f"h:{round(self.tasks['humidity'].most_recent_measurement, 1)}%", (255, 255, 255), font=self.screen.font_small)
 
         #co2
-        self.screen.draw.text((0, 46), str(self.tasks['co2'].most_recent_measurement) + " ppm", (255, 255, 255), font=self.screen.font_big)
+
+        if self.tasks['co2'].counter != self.previous_co2_measurement_id:
+            color = (252, 255, 150)
+        else:
+            color = (255, 255, 255)
+        self.screen.draw.text((0, 46), str(self.tasks['co2'].most_recent_measurement) + " ppm", color, font=self.screen.font_big)
+        self.previous_co2_measurement_id = self.tasks['co2'].counter
         self.screen.draw.text((180, 220), "serial", (255, 255, 255), font=self.screen.font_small)
 
         self.screen.draw.rectangle(((0, 40), (240, 42)), fill=self.get_color_for_value(self.tasks['co2'].most_recent_measurement))
