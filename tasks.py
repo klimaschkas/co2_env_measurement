@@ -6,6 +6,10 @@ from collections import deque
 import mh_z19
 import Adafruit_DHT
 import RPi.GPIO as GPIO
+import matplotlib.pyplot as plt
+from PIL import Image, ImageDraw, ImageFont
+import io
+from ping3 import ping
 
 
 class Task:
@@ -21,7 +25,8 @@ class Task:
         self.thread = None
 
     def start_background_thread(self):
-        self.thread = threading.Thread(target=self.read)
+        self.thread = threading.Thread(target=self.read_loop)
+        self.thread.start()
 
     def read(self):
         pass
@@ -48,6 +53,7 @@ class CO2ReaderTask(Task):
             self.rolling_measurement_storage.append(measurement)
 
     def read(self):
+        print("Reading CO2 value")
         try:
             measurement = mh_z19.read()['co2']
             self.save_measurement(measurement)
@@ -105,3 +111,58 @@ class HumidityReaderTask(Task):
 
     def read(self):
         humidity, _ = self.temp_hum_sensor.read_sensor()
+
+
+class PingReaderTask(Task):
+    def __init__(self, deque_max_length: int):
+        super().__init__(deque_max_length, "ping")
+
+        self.start_background_thread()
+        self.most_recent_measurement = False
+
+    def read(self):
+        self.most_recent_measurement = isinstance(ping('192.168.1.102'), float)
+
+
+class PlotBuilderTask(Task):
+    def __init__(self, deque_max_length: int, co2_reader_task: Task, screen):
+        super().__init__(deque_max_length, "plot")
+        self.co2_reader_task = co2_reader_task
+        self.screen = screen
+        self.semaphore = threading.Semaphore(value=1)
+        self.im = None
+
+        plt.rcParams['axes.facecolor'] = 'black'
+        plt.rcParams['axes.labelcolor'] = 'white'
+        plt.rcParams['xtick.color'] = 'white'
+        plt.rcParams['ytick.color'] = 'white'
+
+        self.start_background_thread()
+
+    def read(self):
+        fig, ax1 = plt.subplots(figsize=(2.4, 1.2), dpi=100, facecolor="black")
+
+        color = 'white'
+        ax1.plot(self.co2_reader_task.rolling_measurement_storage, color=color)
+        ax1.tick_params(axis='y', labelcolor=color)
+
+        ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
+
+        color = 'tab:blue'
+        ax2.plot(self.co2_reader_task.rolling_measurement_storage, ":", color=color)
+        ax2.tick_params(axis='y', labelcolor=color)
+        plt.gcf().subplots_adjust(left=0.2, bottom=0.04, right=0.8)
+        # fig.tight_layout()  # otherwise the right y-label is slightly clipped
+        buf = io.BytesIO()
+        plt.savefig(buf, format='png')
+        buf.seek(0)
+        im = Image.open(buf)
+        #buf.close()
+
+        #self.screen.disp.image(self.screen.image)
+
+        self.semaphore.acquire()
+        self.im = im
+        self.semaphore.release()
+
+        plt.close()

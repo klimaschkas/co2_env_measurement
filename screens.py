@@ -1,14 +1,15 @@
 import math
 import time
+from collections import deque
 
 import digitalio
 import board
 import adafruit_rgb_display.st7789 as st7789
 from PIL import Image, ImageDraw, ImageFont
-import ping
+from ping3 import ping
 import io
 import matplotlib.pyplot as plt
-
+import numpy as np
 from tasks import CO2ReaderTask
 
 
@@ -36,8 +37,18 @@ class Screen:
             self.pages.append(page)
 
     def main_loop(self):
+        render_time_deque = deque(maxlen=50)
+        fps_loop_counter = 0
         while True:
+            time_start = time.time()
+            self.image = Image.new("RGB", (240, 240))
+            self.draw = ImageDraw.Draw(self.image)
             self.pages[self.current_page].draw_frame()
+            render_time_deque.append(time.time() - time_start)
+            if fps_loop_counter == 50:
+                fps_loop_counter = 0
+                print(f"Avg. FPS: {1 / np.average(render_time_deque)}")
+            fps_loop_counter += 1
 
 
 class Page:
@@ -66,49 +77,32 @@ class Page_CO2Main(Page):
             return (255, 69, 56)
     
     def draw_frame(self):
+        time_start = time.time()
         self.screen.draw.text((0, 0), "ppm CO2", (255, 255, 255), font=self.screen.font_middle)
         self.screen.draw.text((110, 10), f"sleep: {self.sleep_time}s", (255, 255, 255), font=self.screen.font_small)
         self.screen.draw.text((180, 10), f"#: {len(self.tasks['co2'].rolling_measurement_storage)}", (255, 255, 255), font=self.screen.font_small)
 
-        if isinstance(ping('192.168.1.102'), float):
+        # TODO properly include ping as task
+        if self.tasks["ping"].most_recent_measurement:
             self.screen.draw.rectangle(((205, 60), (230, 85)), fill="green")
         else:
             self.screen.draw.rectangle(((205, 60), (230, 85)), fill="red")
-        
+
         #temp hum
         self.screen.draw.text((0, 220), f"t:{round(self.tasks['temperature'].most_recent_measurement, 1)}°C", (255, 255, 255), font=self.screen.font_small)
         self.screen.draw.text((80, 220), f"h:{round(self.tasks['humidity'].most_recent_measurement, 1)}%", (255, 255, 255), font=self.screen.font_small)
-        
+
         #co2
         self.screen.draw.text((0, 46), str(self.tasks['co2'].most_recent_measurement) + " ppm", (255, 255, 255), font=self.screen.font_big)
         self.screen.draw.text((180, 220), "serial", (255, 255, 255), font=self.screen.font_small)
 
         self.screen.draw.rectangle(((0, 40), (240, 42)), fill=self.get_color_for_value(self.tasks['co2'].most_recent_measurement))
-        
+
         #plot
-        fig, ax1 = plt.subplots(figsize=(2.4, 1.2), dpi=100, facecolor="black")
-
-        color = 'white'
-        ax1.plot(self.tasks['co2'].rolling_measurement_storage, color=color)
-        ax1.tick_params(axis='y', labelcolor=color)
-
-        ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
-
-        color = 'tab:blue'
-        ax2.plot(self.tasks['co2'].rolling_measurement_storage, ":", color=color)
-        ax2.tick_params(axis='y', labelcolor=color)
-        plt.gcf().subplots_adjust(left=0.2, bottom=0.04, right=0.8)
-        # fig.tight_layout()  # otherwise the right y-label is slightly clipped
-
-        buf = io.BytesIO()
-        plt.savefig(buf, format='png')
-        buf.seek(0)
-        im = Image.open(buf)
-
-        self.screen.image.paste(im, (10, 100))
-
-        buf.close()
-        plt.close()
+        self.tasks["plot"].semaphore.acquire()
+        if self.tasks["plot"].im is not None:
+            self.screen.image.paste(self.tasks["plot"].im, (10, 100))
+        self.tasks["plot"].semaphore.release()
         self.screen.disp.image(self.screen.image)
 
 
