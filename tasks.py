@@ -53,7 +53,6 @@ class CO2ReaderTask(Task):
             self.rolling_measurement_storage.append(measurement)
 
     def read(self):
-        print("Reading CO2 value")
         try:
             measurement = mh_z19.read()['co2']
             self.save_measurement(measurement)
