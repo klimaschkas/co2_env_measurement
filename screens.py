@@ -281,7 +281,7 @@ class Page_HumMain(Page):
         self.screen.draw.text((0, 46), str(self.tasks['humidity'].most_recent_measurement) + " %", color,
                               font=self.screen.font_big)
         self.previous_hum_measurement_id = self.tasks['humidity'].counter
-        self.screen.draw.text((180, 220), "tbd", (255, 255, 255), font=self.screen.font_small)
+        #self.screen.draw.text((180, 220), "tbd", (255, 255, 255), font=self.screen.font_small)
 
         self.screen.draw.rectangle(((0, 40), (240, 42)),
                                    fill=(95, 255, 66))

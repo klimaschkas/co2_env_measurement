@@ -1,3 +1,4 @@
+import ctypes
 import os
 import pickle
 import threading
@@ -12,6 +13,27 @@ import io
 from ping3 import ping
 
 from PAJ7620U2 import PAJ7620U2
+
+
+class StoppableThread(threading.Thread):
+    def __init__(self, target):
+        threading.Thread.__init__(self, target=target)
+
+    def get_id(self):
+        # returns id of the respective thread
+        if hasattr(self, '_thread_id'):
+            return self._thread_id
+        for id, thread in threading._active.items():
+            if thread is self:
+                return id
+
+    def raise_exception(self):
+        thread_id = self.get_id()
+        res = ctypes.pythonapi.PyThreadState_SetAsyncExc(thread_id,
+                                                         ctypes.py_object(SystemExit))
+        if res > 1:
+            ctypes.pythonapi.PyThreadState_SetAsyncExc(thread_id, 0)
+            print('Exception raise failure')
 
 
 class Task:
@@ -32,7 +54,7 @@ class Task:
         self.thread = None
 
     def start_background_thread(self):
-        self.thread = threading.Thread(target=self.read_loop)
+        self.thread = StoppableThread(target=self.read_loop)
         self.thread.start()
 
     def stop_background_thread(self):
@@ -177,8 +199,6 @@ class PlotBuilderTask(Task):
         plt.rcParams['axes.labelcolor'] = 'white'
         plt.rcParams['xtick.color'] = 'white'
         plt.rcParams['ytick.color'] = 'white'
-
-        self.start_background_thread()
 
     def read(self):
         fig, ax1 = plt.subplots(figsize=(2.4, 1.2), dpi=100, facecolor="black")
