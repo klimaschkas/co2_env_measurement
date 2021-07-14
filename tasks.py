@@ -35,6 +35,10 @@ class Task:
         self.thread = threading.Thread(target=self.read_loop)
         self.thread.start()
 
+    def stop_background_thread(self):
+        self.thread.raise_exception()
+        self.thread.join()
+
     def read(self):
         pass
 
@@ -95,10 +99,6 @@ class TemperatureHumiditySensor:
     def start_background_thread(self):
         self.thread = threading.Thread(target=self.make_measurements)
         self.thread.start()
-
-    def stop_background_thread(self):
-        self.thread.raise_exception()
-        self.thread.join()
 
 
 class TemperatureReaderTask(Task):
