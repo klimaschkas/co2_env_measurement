@@ -11,13 +11,19 @@ from PIL import Image, ImageDraw, ImageFont
 import io
 from ping3 import ping
 
+from PAJ7620U2 import PAJ7620U2
+
 
 class Task:
     def __init__(self, deque_max_length: int, name: str, sleep_time=5):
         self.sleep_time = sleep_time
         if os.path.isfile(f"deque_store_{name}.pickle"):
             with open(f"deque_store_{name}.pickle", "rb") as f:
-                self.rolling_measurement_storage = pickle.load(f)
+                try:
+                    self.rolling_measurement_storage = pickle.load(f)
+                except:
+                    os.remove(f"deque_store_{name}.pickle")
+                    self.rolling_measurement_storage = deque(maxlen=deque_max_length)
                 # TODO EOFError when pickle file is corrupted, catch!
         else:
             self.rolling_measurement_storage = deque(maxlen=deque_max_length)
@@ -180,3 +186,23 @@ class PlotBuilderTask(Task):
         self.semaphore.release()
 
         plt.close()
+
+
+class GestureReaderTask(Task):
+    def __init__(self, deque_max_length, screen):
+        super().__init__(deque_max_length, "gesture")
+
+        self.screen = screen
+        self.paj7620u2 = PAJ7620U2()
+        self.start_background_thread()
+
+    def save_measurement(self, measurement):
+        self.rolling_measurement_storage.append(measurement)
+        self.most_recent_measurement = measurement
+
+    def read(self):
+        gesture = self.paj7620u2.get_gesture()
+        if gesture == "Up":
+            self.screen.enable()
+        elif gesture == "Down":
+            self.screen.disable()

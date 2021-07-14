@@ -31,10 +31,17 @@ class Screen:
 
         self.pages = list()
         self.current_page = 0
+        self.screen_enabled = True
 
     def add_pages(self, pages: list):
         for page in pages:
             self.pages.append(page)
+
+    def disable(self):
+        self.screen_enabled = False
+
+    def enable(self):
+        self.screen_enabled = True
 
     def main_loop(self):
         render_time_deque = deque(maxlen=50)
@@ -43,12 +50,13 @@ class Screen:
             time_start = time.time()
             self.image = Image.new("RGB", (240, 240))
             self.draw = ImageDraw.Draw(self.image)
-            self.pages[self.current_page].draw_frame()
-            render_time_deque.append(time.time() - time_start)
-            if fps_loop_counter == 50:
-                fps_loop_counter = 0
-                print(f"Avg. FPS: {1 / np.average(render_time_deque)}")
-            fps_loop_counter += 1
+            if self.screen_enabled:
+                self.pages[self.current_page].draw_frame()
+                render_time_deque.append(time.time() - time_start)
+                if fps_loop_counter == 50:
+                    fps_loop_counter = 0
+                    print(f"Avg. FPS: {1 / np.average(render_time_deque)}")
+                fps_loop_counter += 1
 
 
 class Page:
