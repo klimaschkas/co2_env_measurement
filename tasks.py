@@ -52,8 +52,6 @@ class CO2ReaderTask(Task):
         self.counter = 0
         self.startup_counter = 5
 
-        self.start_background_thread()
-
     def save_measurement(self, measurement):
         self.most_recent_measurement = measurement
         if self.startup_counter > 0:
@@ -98,6 +96,10 @@ class TemperatureHumiditySensor:
         self.thread = threading.Thread(target=self.make_measurements)
         self.thread.start()
 
+    def stop_background_thread(self):
+        self.thread.raise_exception()
+        self.thread.join()
+
 
 class TemperatureReaderTask(Task):
     def __init__(self, deque_max_length, temp_hum_sensor, sleep_time=5):
@@ -122,7 +124,7 @@ class TemperatureReaderTask(Task):
 
     def read(self):
         _, temperature = self.temp_hum_sensor.read_sensor()
-        self.save_measurement(temperature)
+        self.save_measurement(round(temperature, 1))
 
 
 class HumidityReaderTask(Task):
@@ -149,7 +151,7 @@ class HumidityReaderTask(Task):
 
     def read(self):
         humidity, _ = self.temp_hum_sensor.read_sensor()
-        self.save_measurement(humidity)
+        self.save_measurement(round(humidity, 1))
 
 
 class PingReaderTask(Task):

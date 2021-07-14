@@ -34,6 +34,7 @@ class Screen:
         self.page_black = None
         self.current_page = 0
         self.screen_enabled = True
+        self.page_change = False
 
     def add_pages(self, pages: list):
         for page in pages:
@@ -51,10 +52,12 @@ class Screen:
     def previous_page(self):
         self.current_page -= 1
         self.current_page = max(0, self.current_page)
+        self.page_change = True
 
     def next_page(self):
         self.current_page += 1
         self.current_page = min(len(self.pages) - 1, self.current_page)
+        self.page_change = True
 
     def main_loop(self):
         render_time_deque = deque(maxlen=50)
@@ -64,6 +67,12 @@ class Screen:
             self.image = Image.new("RGB", (240, 240))
             self.draw = ImageDraw.Draw(self.image)
             if self.screen_enabled:
+                if self.page_change:
+                    for elem in self.pages:
+                        elem.kill_plot_worker()
+                    self.page_black.draw_frame()
+                    self.page_change = False
+                self.pages[self.current_page].ensure_plot_worker()
                 self.pages[self.current_page].draw_frame()
                 render_time_deque.append(time.time() - time_start)
                 if fps_loop_counter == 50:
@@ -97,7 +106,7 @@ class Page_CO2Main(Page):
     def __init__(self, screen: Screen, tasks: dict):
         super().__init__(screen, tasks)
         self.sleep_time = 10
-
+        self.plot_worker_running = False
         self.previous_co2_measurement_id = 0
 
     def get_color_for_value(self, ppm_value):
@@ -107,7 +116,18 @@ class Page_CO2Main(Page):
             return (255, 238, 56)
         else:
             return (255, 69, 56)
-    
+
+    def ensure_plot_worker(self):
+        if not self.plot_worker_running:
+            self.tasks["plot_co2"].start_background_thread()
+            self.plot_worker_running = True
+        else:
+            pass
+
+    def kill_plot_worker(self):
+        self.tasks["plot_co2"].stop_background_thread()
+        self.plot_worker_running = False
+
     def draw_frame(self):
         time_start = time.time()
         self.screen.draw.text((0, 0), "ppm CO2", (255, 255, 255), font=self.screen.font_middle)
@@ -150,6 +170,7 @@ class Page_TempMain(Page):
         self.sleep_time = 10
 
         self.previous_temp_measurement_id = 0
+        self.plot_worker_running = False
 
     def get_color_for_value(self, ppm_value):
         if ppm_value < 1000:
@@ -158,6 +179,17 @@ class Page_TempMain(Page):
             return (255, 238, 56)
         else:
             return (255, 69, 56)
+
+    def ensure_plot_worker(self):
+        if not self.plot_worker_running:
+            self.tasks["plot_temp"].start_background_thread()
+            self.plot_worker_running = True
+        else:
+            pass
+
+    def kill_plot_worker(self):
+        self.tasks["plot_temp"].stop_background_thread()
+        self.plot_worker_running = False
 
     def draw_frame(self):
         time_start = time.time()
@@ -172,9 +204,9 @@ class Page_TempMain(Page):
             else:
                 self.screen.draw.rectangle(((205, 60), (230, 85)), fill="red")
 
-        self.screen.draw.text((0, 220), f"c02:{round(self.tasks['co2'].most_recent_measurement, 1)} ppm",
+        self.screen.draw.text((0, 220), f"co2: {round(self.tasks['co2'].most_recent_measurement, 1)} ppm",
                               (255, 255, 255), font=self.screen.font_small)
-        self.screen.draw.text((120, 220), f"h:{round(self.tasks['humidity'].most_recent_measurement, 1)}%",
+        self.screen.draw.text((120, 220), f"h: {round(self.tasks['humidity'].most_recent_measurement, 1)}%",
                               (255, 255, 255), font=self.screen.font_small)
 
         if self.tasks['temperature'].counter != self.previous_temp_measurement_id:
@@ -184,7 +216,7 @@ class Page_TempMain(Page):
         self.screen.draw.text((0, 46), str(self.tasks['temperature'].most_recent_measurement) + " °C", color,
                               font=self.screen.font_big)
         self.previous_temp_measurement_id = self.tasks['temperature'].counter
-        self.screen.draw.text((180, 220), "tbd", (255, 255, 255), font=self.screen.font_small)
+        #self.screen.draw.text((180, 220), "tbd", (255, 255, 255), font=self.screen.font_small)
 
         self.screen.draw.rectangle(((0, 40), (240, 42)),
                                    fill=(95, 255, 66))
@@ -203,6 +235,7 @@ class Page_HumMain(Page):
         self.sleep_time = 10
 
         self.previous_hum_measurement_id = 0
+        self.plot_worker_running = False
 
     def get_color_for_value(self, ppm_value):
         if ppm_value < 1000:
@@ -211,6 +244,17 @@ class Page_HumMain(Page):
             return (255, 238, 56)
         else:
             return (255, 69, 56)
+
+    def ensure_plot_worker(self):
+        if not self.plot_worker_running:
+            self.tasks["plot_hum"].start_background_thread()
+            self.plot_worker_running = True
+        else:
+            pass
+
+    def kill_plot_worker(self):
+        self.tasks["plot_hum"].stop_background_thread()
+        self.plot_worker_running = False
 
     def draw_frame(self):
         time_start = time.time()
@@ -225,9 +269,9 @@ class Page_HumMain(Page):
             else:
                 self.screen.draw.rectangle(((205, 60), (230, 85)), fill="red")
 
-        self.screen.draw.text((0, 220), f"c02:{round(self.tasks['co2'].most_recent_measurement, 1)} ppm",
+        self.screen.draw.text((0, 220), f"co2: {round(self.tasks['co2'].most_recent_measurement, 1)} ppm",
                               (255, 255, 255), font=self.screen.font_small)
-        self.screen.draw.text((120, 220), f"t:{round(self.tasks['temperature'].most_recent_measurement, 1)} °C",
+        self.screen.draw.text((120, 220), f"t: {round(self.tasks['temperature'].most_recent_measurement, 1)} °C",
                               (255, 255, 255), font=self.screen.font_small)
 
         if self.tasks['humidity'].counter != self.previous_hum_measurement_id:
