@@ -177,13 +177,13 @@ class Page_TempMain(Page):
         self.screen.draw.text((120, 220), f"h:{round(self.tasks['humidity'].most_recent_measurement, 1)}%",
                               (255, 255, 255), font=self.screen.font_small)
 
-        if self.tasks['temp'].counter != self.previous_temp_measurement_id:
+        if self.tasks['temperature'].counter != self.previous_temp_measurement_id:
             color = (252, 255, 150)
         else:
             color = (255, 255, 255)
-        self.screen.draw.text((0, 46), str(self.tasks['temp'].most_recent_measurement) + " °C", color,
+        self.screen.draw.text((0, 46), str(self.tasks['temperature'].most_recent_measurement) + " °C", color,
                               font=self.screen.font_big)
-        self.previous_temp_measurement_id = self.tasks['temp'].counter
+        self.previous_temp_measurement_id = self.tasks['temperature'].counter
         self.screen.draw.text((180, 220), "tbd", (255, 255, 255), font=self.screen.font_small)
 
         self.screen.draw.rectangle(((0, 40), (240, 42)),
@@ -227,16 +227,16 @@ class Page_HumMain(Page):
 
         self.screen.draw.text((0, 220), f"c02:{round(self.tasks['co2'].most_recent_measurement, 1)} ppm",
                               (255, 255, 255), font=self.screen.font_small)
-        self.screen.draw.text((120, 220), f"t:{round(self.tasks['temp'].most_recent_measurement, 1)} °C",
+        self.screen.draw.text((120, 220), f"t:{round(self.tasks['temperature'].most_recent_measurement, 1)} °C",
                               (255, 255, 255), font=self.screen.font_small)
 
-        if self.tasks['hum'].counter != self.previous_hum_measurement_id:
+        if self.tasks['humidity'].counter != self.previous_hum_measurement_id:
             color = (252, 255, 150)
         else:
             color = (255, 255, 255)
-        self.screen.draw.text((0, 46), str(self.tasks['hum'].most_recent_measurement) + " %", color,
+        self.screen.draw.text((0, 46), str(self.tasks['humidity'].most_recent_measurement) + " %", color,
                               font=self.screen.font_big)
-        self.previous_hum_measurement_id = self.tasks['hum'].counter
+        self.previous_hum_measurement_id = self.tasks['humidity'].counter
         self.screen.draw.text((180, 220), "tbd", (255, 255, 255), font=self.screen.font_small)
 
         self.screen.draw.rectangle(((0, 40), (240, 42)),
