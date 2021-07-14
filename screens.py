@@ -162,7 +162,7 @@ class Page_CO2Main(Page):
             median_measurement_interval = self.sleep_time + 0
         # how many hours are covered by the graph (on median draw time and wait time)
         coverage_hours = round(
-            (median_measurement_interval * self.tasks['co2'].rolling_measurement_storage.maxlen) / 3600, 2)
+            (median_measurement_interval * len(self.tasks['co2'].rolling_measurement_storage)) / 3600, 2)
         self.screen.draw.text((180, 220), f"~{coverage_hours}h", (255, 255, 255), font=self.screen.font_small)
 
         self.screen.draw.rectangle(((0, 40), (240, 42)), fill=self.get_color_for_value(self.tasks['co2'].most_recent_measurement))
@@ -238,7 +238,7 @@ class Page_TempMain(Page):
             median_measurement_interval = self.sleep_time + 0
         # how many hours are covered by the graph (on median draw time and wait time)
         coverage_hours = round(
-            (median_measurement_interval * self.tasks['temperature'].rolling_measurement_storage.maxlen) / 3600, 2)
+            (median_measurement_interval * len(self.tasks['temperature'].rolling_measurement_storage)) / 3600, 2)
         self.screen.draw.text((180, 220), f"~{coverage_hours}h", (255, 255, 255), font=self.screen.font_small)
 
         self.screen.draw.rectangle(((0, 40), (240, 42)),
@@ -314,7 +314,7 @@ class Page_HumMain(Page):
         else:
             median_measurement_interval = self.sleep_time + 0
         # how many hours are covered by the graph (on median draw time and wait time)
-        coverage_hours = round((median_measurement_interval * self.tasks['humidity'].rolling_measurement_storage.maxlen) / 3600, 2)
+        coverage_hours = round((median_measurement_interval * len(self.tasks['humidity'].rolling_measurement_storage)) / 3600, 2)
         self.screen.draw.text((180, 220), f"~{coverage_hours}h", (255, 255, 255), font=self.screen.font_small)
 
         self.screen.draw.rectangle(((0, 40), (240, 42)),
