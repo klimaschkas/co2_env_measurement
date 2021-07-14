@@ -104,12 +104,21 @@ class TemperatureReaderTask(Task):
         super().__init__(deque_max_length, "temp", sleep_time=sleep_time)
         # TODO catch a failing temperature read
         self.temp_hum_sensor = temp_hum_sensor
+        self.counter = 0
+        self.startup_counter = 5
 
         self.start_background_thread()
 
     def save_measurement(self, measurement):
-        self.rolling_measurement_storage.append(measurement)
         self.most_recent_measurement = measurement
+        if self.startup_counter > 0:
+            self.startup_counter -= 1
+        else:
+            self.rolling_measurement_storage.append(measurement)
+        with open(f"deque_store_{self.name}.pickle", "wb") as f:
+            pickle.dump(self.rolling_measurement_storage, f, pickle.HIGHEST_PROTOCOL)
+        self.counter += 1
+        self.counter = self.counter % 50
 
     def read(self):
         _, temperature = self.temp_hum_sensor.read_sensor()
@@ -122,11 +131,21 @@ class HumidityReaderTask(Task):
         # TODO catch a failing humidity read
         self.temp_hum_sensor = temp_hum_sensor
 
+        self.counter = 0
+        self.startup_counter = 5
+
         self.start_background_thread()
 
     def save_measurement(self, measurement):
-        self.rolling_measurement_storage.append(measurement)
         self.most_recent_measurement = measurement
+        if self.startup_counter > 0:
+            self.startup_counter -= 1
+        else:
+            self.rolling_measurement_storage.append(measurement)
+        with open(f"deque_store_{self.name}.pickle", "wb") as f:
+            pickle.dump(self.rolling_measurement_storage, f, pickle.HIGHEST_PROTOCOL)
+        self.counter += 1
+        self.counter = self.counter % 50
 
     def read(self):
         humidity, _ = self.temp_hum_sensor.read_sensor()
@@ -145,9 +164,9 @@ class PingReaderTask(Task):
 
 
 class PlotBuilderTask(Task):
-    def __init__(self, deque_max_length: int, co2_reader_task: Task, screen):
+    def __init__(self, deque_max_length: int, reader_task: Task, screen):
         super().__init__(deque_max_length, "plot")
-        self.co2_reader_task = co2_reader_task
+        self.reader_task = reader_task
         self.screen = screen
         self.semaphore = threading.Semaphore(value=1)
         self.im = None
@@ -163,13 +182,13 @@ class PlotBuilderTask(Task):
         fig, ax1 = plt.subplots(figsize=(2.4, 1.2), dpi=100, facecolor="black")
 
         color = 'white'
-        ax1.plot(self.co2_reader_task.rolling_measurement_storage, color=color)
+        ax1.plot(self.reader_task.rolling_measurement_storage, color=color)
         ax1.tick_params(axis='y', labelcolor=color)
 
         ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
 
         color = 'tab:blue'
-        ax2.plot(self.co2_reader_task.rolling_measurement_storage, ":", color=color)
+        ax2.plot(self.reader_task.rolling_measurement_storage, ":", color=color)
         ax2.tick_params(axis='y', labelcolor=color)
         plt.gcf().subplots_adjust(left=0.2, bottom=0.04, right=0.8)
         # fig.tight_layout()  # otherwise the right y-label is slightly clipped
@@ -189,8 +208,8 @@ class PlotBuilderTask(Task):
 
 
 class GestureReaderTask(Task):
-    def __init__(self, deque_max_length, screen):
-        super().__init__(deque_max_length, "gesture")
+    def __init__(self, deque_max_length, screen, sleep_time=0.05):
+        super().__init__(deque_max_length, "gesture",sleep_time=sleep_time)
 
         self.screen = screen
         self.paj7620u2 = PAJ7620U2()

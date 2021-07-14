@@ -1,4 +1,5 @@
 import math
+import os
 import time
 from collections import deque
 
@@ -105,10 +106,11 @@ class Page_CO2Main(Page):
         self.screen.draw.text((110, 10), f"sleep: {self.sleep_time}s", (255, 255, 255), font=self.screen.font_small)
         self.screen.draw.text((180, 10), f"#: {len(self.tasks['co2'].rolling_measurement_storage)}", (255, 255, 255), font=self.screen.font_small)
 
-        if self.tasks["ping"].most_recent_measurement:
-            self.screen.draw.rectangle(((205, 60), (230, 85)), fill="green")
-        else:
-            self.screen.draw.rectangle(((205, 60), (230, 85)), fill="red")
+        if os.getenv("DEPLOYMENT_ID") == 410:
+            if self.tasks["ping"].most_recent_measurement:
+                self.screen.draw.rectangle(((205, 60), (230, 85)), fill="green")
+            else:
+                self.screen.draw.rectangle(((205, 60), (230, 85)), fill="red")
 
         #temp hum
         self.screen.draw.text((0, 220), f"t:{round(self.tasks['temperature'].most_recent_measurement, 1)}°C", (255, 255, 255), font=self.screen.font_small)
@@ -127,11 +129,118 @@ class Page_CO2Main(Page):
         self.screen.draw.rectangle(((0, 40), (240, 42)), fill=self.get_color_for_value(self.tasks['co2'].most_recent_measurement))
 
         #plot
-        self.tasks["plot"].semaphore.acquire()
-        if self.tasks["plot"].im is not None:
-            self.screen.image.paste(self.tasks["plot"].im, (10, 100))
-        self.tasks["plot"].semaphore.release()
+        self.tasks["plot_co2"].semaphore.acquire()
+        if self.tasks["plot_co2"].im is not None:
+            self.screen.image.paste(self.tasks["plot_co2"].im, (10, 100))
+        self.tasks["plot_co2"].semaphore.release()
         self.screen.disp.image(self.screen.image)
+
+
+class Page_TempMain(Page):
+    def __init__(self, screen: Screen, tasks: dict):
+        super().__init__(screen, tasks)
+        self.sleep_time = 10
+
+        self.previous_temp_measurement_id = 0
+
+    def get_color_for_value(self, ppm_value):
+        if ppm_value < 1000:
+            return (95, 255, 66)
+        elif ppm_value < 1400:
+            return (255, 238, 56)
+        else:
+            return (255, 69, 56)
+
+    def draw_frame(self):
+        time_start = time.time()
+        self.screen.draw.text((0, 0), "°C", (255, 255, 255), font=self.screen.font_middle)
+        #self.screen.draw.text((110, 10), f"sleep: {self.sleep_time}s", (255, 255, 255), font=self.screen.font_small)
+        #self.screen.draw.text((180, 10), f"#: {len(self.tasks['co2'].rolling_measurement_storage)}", (255, 255, 255),
+        #                      font=self.screen.font_small)
+
+        if os.getenv("DEPLOYMENT_ID") == 410:
+            if self.tasks["ping"].most_recent_measurement:
+                self.screen.draw.rectangle(((205, 60), (230, 85)), fill="green")
+            else:
+                self.screen.draw.rectangle(((205, 60), (230, 85)), fill="red")
+
+        self.screen.draw.text((0, 220), f"c02:{round(self.tasks['co2'].most_recent_measurement, 1)} ppm",
+                              (255, 255, 255), font=self.screen.font_small)
+        self.screen.draw.text((120, 220), f"h:{round(self.tasks['humidity'].most_recent_measurement, 1)}%",
+                              (255, 255, 255), font=self.screen.font_small)
+
+        if self.tasks['temp'].counter != self.previous_temp_measurement_id:
+            color = (252, 255, 150)
+        else:
+            color = (255, 255, 255)
+        self.screen.draw.text((0, 46), str(self.tasks['temp'].most_recent_measurement) + " °C", color,
+                              font=self.screen.font_big)
+        self.previous_temp_measurement_id = self.tasks['temp'].counter
+        self.screen.draw.text((180, 220), "tbd", (255, 255, 255), font=self.screen.font_small)
+
+        self.screen.draw.rectangle(((0, 40), (240, 42)),
+                                   fill=(95, 255, 66))
+
+        # plot
+        self.tasks["plot_temp"].semaphore.acquire()
+        if self.tasks["plot_temp"].im is not None:
+            self.screen.image.paste(self.tasks["plot_temp"].im, (10, 100))
+        self.tasks["plot_temp"].semaphore.release()
+        self.screen.disp.image(self.screen.image)
+
+
+class Page_HumMain(Page):
+    def __init__(self, screen: Screen, tasks: dict):
+        super().__init__(screen, tasks)
+        self.sleep_time = 10
+
+        self.previous_hum_measurement_id = 0
+
+    def get_color_for_value(self, ppm_value):
+        if ppm_value < 1000:
+            return (95, 255, 66)
+        elif ppm_value < 1400:
+            return (255, 238, 56)
+        else:
+            return (255, 69, 56)
+
+    def draw_frame(self):
+        time_start = time.time()
+        self.screen.draw.text((0, 0), "% humidity (relative)", (255, 255, 255), font=self.screen.font_middle)
+        #self.screen.draw.text((110, 10), f"sleep: {self.sleep_time}s", (255, 255, 255), font=self.screen.font_small)
+        #self.screen.draw.text((180, 10), f"#: {len(self.tasks['co2'].rolling_measurement_storage)}", (255, 255, 255),
+        #                      font=self.screen.font_small)
+
+        if os.getenv("DEPLOYMENT_ID") == 410:
+            if self.tasks["ping"].most_recent_measurement:
+                self.screen.draw.rectangle(((205, 60), (230, 85)), fill="green")
+            else:
+                self.screen.draw.rectangle(((205, 60), (230, 85)), fill="red")
+
+        self.screen.draw.text((0, 220), f"c02:{round(self.tasks['co2'].most_recent_measurement, 1)} ppm",
+                              (255, 255, 255), font=self.screen.font_small)
+        self.screen.draw.text((120, 220), f"t:{round(self.tasks['temp'].most_recent_measurement, 1)} °C",
+                              (255, 255, 255), font=self.screen.font_small)
+
+        if self.tasks['hum'].counter != self.previous_hum_measurement_id:
+            color = (252, 255, 150)
+        else:
+            color = (255, 255, 255)
+        self.screen.draw.text((0, 46), str(self.tasks['hum'].most_recent_measurement) + " %", color,
+                              font=self.screen.font_big)
+        self.previous_hum_measurement_id = self.tasks['hum'].counter
+        self.screen.draw.text((180, 220), "tbd", (255, 255, 255), font=self.screen.font_small)
+
+        self.screen.draw.rectangle(((0, 40), (240, 42)),
+                                   fill=(95, 255, 66))
+
+        # plot
+        self.tasks["plot_hum"].semaphore.acquire()
+        if self.tasks["plot_hum"].im is not None:
+            self.screen.image.paste(self.tasks["plot_hum"].im, (10, 100))
+        self.tasks["plot_hum"].semaphore.release()
+        self.screen.disp.image(self.screen.image)
+
 
 
 class Page_Screensaver(Page):
