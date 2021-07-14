@@ -157,9 +157,9 @@ class Page_CO2Main(Page):
         dtl = list(self.draw_time_list)
         dtl.sort()
         if len(dtl) >= 10:
-            median_measurement_interval = self.sleep_time + dtl[int(len(dtl) / 2)]
+            median_measurement_interval = self.tasks['co2'].sleep_time + dtl[int(len(dtl) / 2)]
         else:
-            median_measurement_interval = self.sleep_time + 0
+            median_measurement_interval = self.tasks['co2'].sleep_time + 0
         # how many hours are covered by the graph (on median draw time and wait time)
         coverage_hours = round(
             (median_measurement_interval * len(self.tasks['co2'].rolling_measurement_storage)) / 3600, 2)
@@ -219,7 +219,7 @@ class Page_TempMain(Page):
 
         self.screen.draw.text((0, 220), f"co2: {round(self.tasks['co2'].most_recent_measurement, 1)} ppm",
                               (255, 255, 255), font=self.screen.font_small)
-        self.screen.draw.text((120, 220), f"h: {round(self.tasks['humidity'].most_recent_measurement, 1)}%",
+        self.screen.draw.text((100, 220), f"h: {round(self.tasks['humidity'].most_recent_measurement, 1)}%",
                               (255, 255, 255), font=self.screen.font_small)
 
         if self.tasks['temperature'].counter != self.previous_temp_measurement_id:
@@ -233,9 +233,9 @@ class Page_TempMain(Page):
         dtl = list(self.draw_time_list)
         dtl.sort()
         if len(dtl) >= 10:
-            median_measurement_interval = self.sleep_time + dtl[int(len(dtl) / 2)]
+            median_measurement_interval = self.tasks['temperature'].sleep_time + dtl[int(len(dtl) / 2)]
         else:
-            median_measurement_interval = self.sleep_time + 0
+            median_measurement_interval = self.tasks['temperature'].sleep_time + 0
         # how many hours are covered by the graph (on median draw time and wait time)
         coverage_hours = round(
             (median_measurement_interval * len(self.tasks['temperature'].rolling_measurement_storage)) / 3600, 2)
@@ -296,7 +296,7 @@ class Page_HumMain(Page):
 
         self.screen.draw.text((0, 220), f"co2: {round(self.tasks['co2'].most_recent_measurement, 1)} ppm",
                               (255, 255, 255), font=self.screen.font_small)
-        self.screen.draw.text((120, 220), f"t: {round(self.tasks['temperature'].most_recent_measurement, 1)} °C",
+        self.screen.draw.text((100, 220), f"t: {round(self.tasks['temperature'].most_recent_measurement, 1)} °C",
                               (255, 255, 255), font=self.screen.font_small)
 
         if self.tasks['humidity'].counter != self.previous_hum_measurement_id:
@@ -310,9 +310,9 @@ class Page_HumMain(Page):
         dtl = list(self.draw_time_list)
         dtl.sort()
         if len(dtl) >= 10:
-            median_measurement_interval = self.sleep_time + dtl[int(len(dtl) / 2)]
+            median_measurement_interval = self.tasks['humidity'].sleep_time + dtl[int(len(dtl) / 2)]
         else:
-            median_measurement_interval = self.sleep_time + 0
+            median_measurement_interval = self.tasks['humidity'].sleep_time + 0
         # how many hours are covered by the graph (on median draw time and wait time)
         coverage_hours = round((median_measurement_interval * len(self.tasks['humidity'].rolling_measurement_storage)) / 3600, 2)
         self.screen.draw.text((180, 220), f"~{coverage_hours}h", (255, 255, 255), font=self.screen.font_small)
