@@ -48,6 +48,14 @@ class Screen:
     def enable(self):
         self.screen_enabled = True
 
+    def previous_page(self):
+        self.current_page -= 1
+        self.current_page = min(0, self.current_page)
+
+    def next_page(self):
+        self.current_page += 1
+        self.current_page = max(len(self.pages) - 1, self.current_page)
+
     def main_loop(self):
         render_time_deque = deque(maxlen=50)
         fps_loop_counter = 0

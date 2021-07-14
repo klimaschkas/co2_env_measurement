@@ -14,8 +14,8 @@ if __name__ == '__main__':
         "gesture": GestureReaderTask(deque_max_length=0, screen=screen)
     }
     tasks["plot_co2"] = PlotBuilderTask(deque_max_length=0, reader_task=tasks["co2"], screen=screen)
-    tasks["plot_temp"] = PlotBuilderTask(deque_max_length=0, reader_task=tasks["temp"], screen=screen)
-    tasks["plot_hum"] = PlotBuilderTask(deque_max_length=0, reader_task=tasks["hum"], screen=screen)
+    tasks["plot_temp"] = PlotBuilderTask(deque_max_length=0, reader_task=tasks["temperature"], screen=screen)
+    tasks["plot_hum"] = PlotBuilderTask(deque_max_length=0, reader_task=tasks["humidity"], screen=screen)
 
     page_black = BlackPage(screen=screen, tasks=tasks)
     page_co2_main = Page_CO2Main(screen=screen, tasks=tasks)

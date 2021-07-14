@@ -225,3 +225,7 @@ class GestureReaderTask(Task):
             self.screen.enable()
         elif gesture == "Down":
             self.screen.disable()
+        elif gesture == "Right":
+            self.screen.next_page()
+        elif gesture == "Left":
+            self.screen.previous_page()
