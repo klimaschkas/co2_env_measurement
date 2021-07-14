@@ -58,8 +58,9 @@ class Task:
         self.thread.start()
 
     def stop_background_thread(self):
-        self.thread.raise_exception()
-        self.thread.join()
+        if self.thread is not None:
+            self.thread.raise_exception()
+            self.thread.join()
 
     def read(self):
         pass

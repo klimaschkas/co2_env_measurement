@@ -108,6 +108,7 @@ class Page_CO2Main(Page):
         self.sleep_time = 10
         self.plot_worker_running = False
         self.previous_co2_measurement_id = 0
+        self.draw_time_list = deque(maxlen=2500)
 
     def get_color_for_value(self, ppm_value):
         if ppm_value < 1000:
@@ -152,7 +153,14 @@ class Page_CO2Main(Page):
             color = (255, 255, 255)
         self.screen.draw.text((0, 46), str(self.tasks['co2'].most_recent_measurement) + " ppm", color, font=self.screen.font_big)
         self.previous_co2_measurement_id = self.tasks['co2'].counter
-        self.screen.draw.text((180, 220), "serial", (255, 255, 255), font=self.screen.font_small)
+
+        dtl = list(self.draw_time_list)
+        dtl.sort()
+        median_measurement_interval = self.sleep_time + dtl[int(len(dtl) / 2)]
+        # how many hours are covered by the graph (on median draw time and wait time)
+        coverage_hours = round(
+            (median_measurement_interval * self.tasks['co2'].rolling_measurement_storage.maxlen) / 3600, 2)
+        self.screen.draw.text((180, 220), f"~{coverage_hours}h", (255, 255, 255), font=self.screen.font_small)
 
         self.screen.draw.rectangle(((0, 40), (240, 42)), fill=self.get_color_for_value(self.tasks['co2'].most_recent_measurement))
 
@@ -162,6 +170,7 @@ class Page_CO2Main(Page):
             self.screen.image.paste(self.tasks["plot_co2"].im, (10, 100))
         self.tasks["plot_co2"].semaphore.release()
         self.screen.disp.image(self.screen.image)
+        self.draw_time_list.append(time.time() - time_start)
 
 
 class Page_TempMain(Page):
@@ -171,6 +180,7 @@ class Page_TempMain(Page):
 
         self.previous_temp_measurement_id = 0
         self.plot_worker_running = False
+        self.draw_time_list = deque(maxlen=2500)
 
     def get_color_for_value(self, ppm_value):
         if ppm_value < 1000:
@@ -193,7 +203,7 @@ class Page_TempMain(Page):
 
     def draw_frame(self):
         time_start = time.time()
-        self.screen.draw.text((0, 0), "°C", (255, 255, 255), font=self.screen.font_middle)
+        self.screen.draw.text((0, 0), "°C temperature", (255, 255, 255), font=self.screen.font_middle)
         #self.screen.draw.text((110, 10), f"sleep: {self.sleep_time}s", (255, 255, 255), font=self.screen.font_small)
         #self.screen.draw.text((180, 10), f"#: {len(self.tasks['co2'].rolling_measurement_storage)}", (255, 255, 255),
         #                      font=self.screen.font_small)
@@ -216,7 +226,14 @@ class Page_TempMain(Page):
         self.screen.draw.text((0, 46), str(self.tasks['temperature'].most_recent_measurement) + " °C", color,
                               font=self.screen.font_big)
         self.previous_temp_measurement_id = self.tasks['temperature'].counter
-        #self.screen.draw.text((180, 220), "tbd", (255, 255, 255), font=self.screen.font_small)
+
+        dtl = list(self.draw_time_list)
+        dtl.sort()
+        median_measurement_interval = self.sleep_time + dtl[int(len(dtl) / 2)]
+        # how many hours are covered by the graph (on median draw time and wait time)
+        coverage_hours = round(
+            (median_measurement_interval * self.tasks['temperature'].rolling_measurement_storage.maxlen) / 3600, 2)
+        self.screen.draw.text((180, 220), f"~{coverage_hours}h", (255, 255, 255), font=self.screen.font_small)
 
         self.screen.draw.rectangle(((0, 40), (240, 42)),
                                    fill=(95, 255, 66))
@@ -227,6 +244,7 @@ class Page_TempMain(Page):
             self.screen.image.paste(self.tasks["plot_temp"].im, (10, 100))
         self.tasks["plot_temp"].semaphore.release()
         self.screen.disp.image(self.screen.image)
+        self.draw_time_list.append(time.time() - time_start)
 
 
 class Page_HumMain(Page):
@@ -236,6 +254,7 @@ class Page_HumMain(Page):
 
         self.previous_hum_measurement_id = 0
         self.plot_worker_running = False
+        self.draw_time_list = deque(maxlen=2500)
 
     def get_color_for_value(self, ppm_value):
         if ppm_value < 1000:
@@ -281,7 +300,13 @@ class Page_HumMain(Page):
         self.screen.draw.text((0, 46), str(self.tasks['humidity'].most_recent_measurement) + " %", color,
                               font=self.screen.font_big)
         self.previous_hum_measurement_id = self.tasks['humidity'].counter
-        #self.screen.draw.text((180, 220), "tbd", (255, 255, 255), font=self.screen.font_small)
+
+        dtl = list(self.draw_time_list)
+        dtl.sort()
+        median_measurement_interval = self.sleep_time + dtl[int(len(dtl) / 2)]
+        # how many hours are covered by the graph (on median draw time and wait time)
+        coverage_hours = round((median_measurement_interval * self.tasks['humidity'].rolling_measurement_storage.maxlen) / 3600, 2)
+        self.screen.draw.text((180, 220), f"~{coverage_hours}h", (255, 255, 255), font=self.screen.font_small)
 
         self.screen.draw.rectangle(((0, 40), (240, 42)),
                                    fill=(95, 255, 66))
@@ -292,7 +317,7 @@ class Page_HumMain(Page):
             self.screen.image.paste(self.tasks["plot_hum"].im, (10, 100))
         self.tasks["plot_hum"].semaphore.release()
         self.screen.disp.image(self.screen.image)
-
+        self.draw_time_list.append(time.time() - time_start)
 
 
 class Page_Screensaver(Page):
