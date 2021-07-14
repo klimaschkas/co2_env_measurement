@@ -78,6 +78,8 @@ class CO2ReaderTask(Task):
         self.counter = 0
         self.startup_counter = 5
 
+        self.start_background_thread()
+
     def save_measurement(self, measurement):
         self.most_recent_measurement = measurement
         if self.startup_counter > 0:
