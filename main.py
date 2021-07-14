@@ -1,4 +1,4 @@
-from screens import Screen, Page_CO2Main
+from screens import Screen, Page_CO2Main, BlackPage
 from tasks import CO2ReaderTask, TemperatureReaderTask, HumidityReaderTask, TemperatureHumiditySensor, PlotBuilderTask, \
     PingReaderTask, GestureReaderTask
 
@@ -16,6 +16,8 @@ if __name__ == '__main__':
     tasks["plot"] = PlotBuilderTask(deque_max_length=0, co2_reader_task=tasks["co2"], screen=screen)
 
     page_co2_main = Page_CO2Main(screen=screen, tasks=tasks)
+    page_black = BlackPage(screen=screen, tasks=tasks)
     screen.add_pages([page_co2_main])
+    screen.add_blackpage(page_black)
 
     screen.main_loop()
