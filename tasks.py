@@ -255,10 +255,10 @@ class GestureReaderTask(Task):
         gesture = self.paj7620u2.get_gesture()
         if gesture == "Up":
             # self.screen.enable()
-            self.screen.next_page()
+            self.screen.previous_page()
         elif gesture == "Down":
             # self.screen.disable()
-            self.screen.previous_page()
+            self.screen.next_page()
         elif gesture == "Right":
             pass
             #self.screen.next_page()
