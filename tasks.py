@@ -237,7 +237,14 @@ class GestureReaderTask(Task):
         super().__init__(deque_max_length, "gesture",sleep_time=sleep_time)
 
         self.screen = screen
-        self.paj7620u2 = PAJ7620U2()
+        # initializing the gesture sensor sometimes doesn't work directly after startup
+        # therefore, the gesture sensor has 5 attempts to initialize and 2s breaks in between.
+        for i in range(5):
+            try:
+                self.paj7620u2 = PAJ7620U2()
+                break
+            except OSError:
+                time.sleep(2)
         self.start_background_thread()
 
     def save_measurement(self, measurement):
@@ -247,10 +254,14 @@ class GestureReaderTask(Task):
     def read(self):
         gesture = self.paj7620u2.get_gesture()
         if gesture == "Up":
-            self.screen.enable()
-        elif gesture == "Down":
-            self.screen.disable()
-        elif gesture == "Right":
+            # self.screen.enable()
             self.screen.next_page()
-        elif gesture == "Left":
+        elif gesture == "Down":
+            # self.screen.disable()
             self.screen.previous_page()
+        elif gesture == "Right":
+            pass
+            #self.screen.next_page()
+        elif gesture == "Left":
+            pass
+            #self.screen.previous_page()
